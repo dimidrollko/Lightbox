@@ -1,40 +1,58 @@
 import UIKit
 import Imaginary
 
+
+typealias CustomImageLoaderClosure = (UIImageView, String?, UIImage?,completion:((_ result: UIImage?) -> Void)?)
+
 open class LightboxImage {
-
-  open fileprivate(set) var image: UIImage?
-  open fileprivate(set) var imageURL: URL?
-  open fileprivate(set) var videoURL: URL?
-  open var text: String
-
-  // MARK: - Initialization
-
-  public init(image: UIImage, text: String = "", videoURL: URL? = nil) {
-    self.image = image
-    self.text = text
-    self.videoURL = videoURL
-  }
-
-  public init(imageURL: URL, text: String = "", videoURL: URL? = nil) {
-    self.imageURL = imageURL
-    self.text = text
-    self.videoURL = videoURL
-  }
-
-  open func addImageTo(_ imageView: UIImageView, completion: ((_ image: UIImage?) -> Void)? = nil) {
-    if let image = image {
-      imageView.image = image
-      completion?(image)
-    } else if let imageURL = imageURL {
-      imageView.setImage(url: imageURL, placeholder: nil, completion: { result in
-        switch result {
-        case .value(let image):
-          completion?(image)
-        case .error:
-          completion?(nil)
-        }
-      })
+    
+    open fileprivate(set) var image: UIImage?
+    open fileprivate(set) var imageURL: URL?
+    open fileprivate(set) var videoURL: URL?
+    //Custom image loader prefferences
+    open fileprivate(set) var imageStr : String?
+    open fileprivate(set) var customLoader : CustomImageLoaderClosure?
+    open var text: String
+    
+    // MARK: - Initialization
+    
+    public init(image: UIImage, text: String = "", videoURL: URL? = nil) {
+        self.image = image
+        self.text = text
+        self.videoURL = videoURL
     }
-  }
+    
+    public init(imageURL: URL, text: String = "", videoURL: URL? = nil) {
+        self.imageURL = imageURL
+        self.text = text
+        self.videoURL = videoURL
+    }
+    
+    public init(URL: String, placeholder: UIImage?, customImageLoader:CustomImageLoaderClosure, text: String = "") {
+        self.imageStr = URL
+        self.text = text
+        self.image = placeholder
+    }
+    
+    open func addImageTo(_ imageView: UIImageView, completion: ((_ image: UIImage?) -> Void)? = nil) {
+        if let customLoader = customLoader {
+            customLoader(imageView, imageStr, image, completion: { image in
+                completion?()
+            })
+            return
+        }
+        if let image = image {
+            imageView.image = image
+            completion?(image)
+        } else if let imageURL = imageURL {
+            imageView.setImage(url: imageURL, placeholder: nil, completion: { result in
+                switch result {
+                case .value(let image):
+                    completion?(image)
+                case .error:
+                    completion?(nil)
+                }
+            })
+        }
+    }
 }
