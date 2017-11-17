@@ -1,11 +1,11 @@
 import UIKit
 import Imaginary
 
-
-typealias CustomImageLoaderClosure = (UIImageView, String?, UIImage?,completion:((_ result: UIImage?) -> Void)?)
-
 open class LightboxImage {
-    
+    //Custom callbacks for:
+    public typealias ResponseLoadingClosure = ((_ result: UIImage?) -> Void) //Response callback when image loaded
+    public typealias CustomImageLoaderClosure = ((_ imageView: UIImageView?, _ imageURL :String?, _ placeholder: UIImage?, _ callback: ResponseLoadingClosure?)-> Void) //Callback for custom image loading
+
     open fileprivate(set) var image: UIImage?
     open fileprivate(set) var imageURL: URL?
     open fileprivate(set) var videoURL: URL?
@@ -28,16 +28,17 @@ open class LightboxImage {
         self.videoURL = videoURL
     }
     
-    public init(URL: String, placeholder: UIImage?, customImageLoader:CustomImageLoaderClosure, text: String = "") {
+    public init(URL: String, placeholder: UIImage?, text: String = "", customImageLoader: @escaping CustomImageLoaderClosure) {
         self.imageStr = URL
         self.text = text
         self.image = placeholder
+        self.customLoader = customImageLoader
     }
-    
+
     open func addImageTo(_ imageView: UIImageView, completion: ((_ image: UIImage?) -> Void)? = nil) {
-        if let customLoader = customLoader {
-            customLoader(imageView, imageStr, image, completion: { image in
-                completion?()
+        if let customImgLoader = customLoader {
+            customImgLoader(imageView, imageStr, image, { imageResponse in
+                completion?(imageResponse)
             })
             return
         }
